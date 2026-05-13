@@ -65,17 +65,9 @@ const usersSlice = createSlice({
       };
       state.push(NewUser);
     },
-    LoginInfo: (state, action) => {
-      const { email, password } = action.payload;
-
-      const User = {
-        email,
-        password,
-      };
-      return User;
-    },
+ 
   },
 });
 
-export const { transferFunds, createuser, LoginInfo } = usersSlice.actions;
+export const { transferFunds, createuser } = usersSlice.actions;
 export default usersSlice.reducer;

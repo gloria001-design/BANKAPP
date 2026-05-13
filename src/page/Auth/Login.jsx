@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { useSelector } from "react-redux";
+// import { LoginInfo } from "../../redux/slices/usersSlice";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +21,7 @@ const LoginPage = () => {
   const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
+
   const loginUser = (email, password) => {
     const user = users.find(
       (user) => user.email === email && user.password === password
@@ -29,6 +31,9 @@ const LoginPage = () => {
       alert("Invalid credentials");
       return;
     }
+
+    
+
 
     console.log("login user", user);
 
