@@ -6,8 +6,10 @@ import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useDispatch,useSelector } from "react-redux";
 
 const LoginPage = () => {
+  const dispatch =useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const users = useSelector(state => state.users);
   const [email, setEmail] = useState("");
@@ -16,19 +18,23 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const loginUser = (email, password) => {
-    const user = users.find(user => user.email === email);
-    if(user === undefined) {
+    const user = users.find(user => email === user.email);
+    const users = useSelector((state) => state.users);
+    if(!user) {
+      alert("Invalid credentials");
+      return;
+    }
+     else if(password !== user.password) {
       alert("Invalid credentials");
       return;
     }else if(password === user.password) {
       console.log("login user",user);
       setUser(user);
+      localStorage.setItem("user", JSON.stringify(user));
       navigate("/dashboard");
-    } else if(password !== user.password) {
-      alert("Invalid credentials");
-      return;
     }
   }
+console.log("users", users);
 
   const handleLogin = (e) => {
     e.preventDefault();

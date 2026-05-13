@@ -54,10 +54,15 @@ const usersSlice = createSlice({
                 accountNumber: []
             };
             state.push(NewUser);
+        },
+        existingUser: (state, action) => {
+            const { email, password } = action.payload;
+            const user = state.find(user => user.email === email && user.password === password);
+            return user;
         }
 
     }
 })
 
-export const { transferFunds, createuser } = usersSlice.actions;
+export const { transferFunds, createuser, existingUser } = usersSlice.actions;
 export default usersSlice.reducer;

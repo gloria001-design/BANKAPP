@@ -1,5 +1,5 @@
-import React, {  useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import {
   FaRegEye,
@@ -17,25 +17,30 @@ import { createuser } from "../../redux/usersSlice";
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
+  const navigate = useNavigate()
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const signUpSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters").regex(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/,
-    "Password must contain uppercase, lowercase, number, and special character"
-  ),
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"], // This specifies where the error message should be shown
-});
-const user = useSelector((state) => state.users);
+  const signUpSchema = z
+    .object({
+      email: z.string().email("Invalid email address"),
+      password: z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .regex(
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/,
+          "Password must contain uppercase, lowercase, number, and special character",
+        ),
+      fullName: z.string().min(2, "Full name must be at least 2 characters"),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Passwords do not match",
+      path: ["confirmPassword"], // This specifies where the error message should be shown
+    });
+  const user = useSelector((state) => state.users);
 
-console.log("user",user)
-
+  console.log("user", user);
 
   const {
     register,
@@ -44,17 +49,18 @@ console.log("user",user)
   } = useForm({
     resolver: zodResolver(signUpSchema), // Links Zod to the form
   });
-  
 
   const submitSignUp = handleSubmit((data) => {
+    const accountNumber = Math.floor(
+      1000000000 + Math.random() * 9000000000,
+    ).toString();
 
-    const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Generate a random 10-digit account number
-    // Handle form submission, e.g., send data to backend
-    
     console.log("Form Data:", data);
-    
-    dispatch(createuser({ ...data, accountNumber }));
-    console.log(dispatch(createuser({ ...data, accountNumber })))
+
+    dispatch(createuser({...data, accountNumber}));
+    setTimeout(()=>{
+      navigate("/")
+    },5000)
   });
   // console.log(userDetails);
   return (
@@ -80,7 +86,6 @@ console.log("user",user)
               {errors.fullName && <span>{errors.fullName.message}</span>}
             </div>
           </div>
-
           {/* Email Input */}
           <div className="form_group">
             <label htmlFor="email">Email Address</label>
@@ -95,7 +100,6 @@ console.log("user",user)
               {errors.email && <span>{errors.email.message}</span>}
             </div>
           </div>
-
           {/* Account Number Input
           <div className="form_group">
             <label htmlFor="accountNumber">Account Number</label>
@@ -108,7 +112,6 @@ console.log("user",user)
               />
             </div>
           </div> */}
-
           {/* Password Input */}
           <div className="form_group">
             <label htmlFor="password">Password</label>
@@ -120,7 +123,7 @@ console.log("user",user)
                 placeholder="Create a strong password"
                 {...register("password")} // Connects input to react-hook-form
               />
-             
+
               <button
                 type="button"
                 className="toggle_password"
@@ -129,9 +132,10 @@ console.log("user",user)
                 {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
               </button>
             </div>
-             {errors.password && <span style={{color: "red"}}>{errors.password.message}</span>}
+            {errors.password && (
+              <span style={{ color: "red" }}>{errors.password.message}</span>
+            )}
           </div>
-
           {/* Confirm Password Input */}
           <div className="form_group">
             <label htmlFor="confirmPassword">Confirm Password</label>
@@ -143,7 +147,7 @@ console.log("user",user)
                 placeholder="Confirm your password"
                 {...register("confirmPassword")} // Connects input to react-hook-form
               />
-              
+
               <button
                 type="button"
                 className="toggle_password"
@@ -151,11 +155,11 @@ console.log("user",user)
               >
                 {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
               </button>
-
             </div>
-            {errors.confirmPassword && <span>{errors.confirmPassword.message}</span>}
+            {errors.confirmPassword && (
+              <span>{errors.confirmPassword.message}</span>
+            )}
           </div>
-
           {/* Terms & Conditions */}
           <div className="form_group">
             <label className="terms_checkbox">
@@ -168,11 +172,12 @@ console.log("user",user)
               </span>
             </label>
           </div>
-
           {/* Signup Button */}
-          <button type="submit" className="login_btn">
+          {/* <Link to="/"> */}{" "}
+          <button type="submit" className="login_btn" >
             Sign Up
           </button>
+          {/* </Link> */}
         </form>
 
         {/* Login Link */}
