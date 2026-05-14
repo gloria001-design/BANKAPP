@@ -1,53 +1,72 @@
 import React, { useState, useContext } from "react";
+
 import { Link, useNavigate } from "react-router-dom";
+
 import "./Login.css";
-import {
-  FaRegEye,
-  FaRegEyeSlash,
-  FaUser,
-  FaLock,
-} from "react-icons/fa";
+
+import { FaRegEye, FaRegEyeSlash, FaUser, FaLock } from "react-icons/fa";
+
 import { AuthContext } from "../../context/AuthContext.jsx";
-import { useSelector } from "react-redux";
-// import { LoginInfo } from "../../redux/slices/usersSlice";
+
+import { useDispatch, useSelector } from "react-redux";
+
+import { clearAuthError, login } from "../../redux/usersSlice";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const users = useSelector((state) => state.users);
 
   const [email, setEmail] = useState("");
+
   const [password, setPassword] = useState("");
 
-  const { setUser } = useContext(AuthContext);
+  const dispatch = useDispatch();
+
   const navigate = useNavigate();
 
+  const { setUser } = useContext(AuthContext);
 
-  const loginUser = (email, password) => {
-    const user = users.find(
-      (user) => user.email === email && user.password === password
-    );
-
-    if (!user) {
-      alert("Invalid credentials");
-      return;
-    }
-
-    
-
-
-    console.log("login user", user);
-
-    setUser(user);
-
-    // Save logged in user
-    localStorage.setItem("user", JSON.stringify(user));
-
-    navigate("/dashboard");
-  };
+  // Get Redux state
+  const { currentUser, authError } = useSelector((state) => state.users);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    loginUser(email, password);
+
+    dispatch(clearAuthError());
+
+    dispatch(
+      login({
+        email,
+        password,
+      }),
+    );
+
+    // Small timeout to allow Redux state update
+    setTimeout(() => {
+      const updatedUser =
+        JSON.parse(localStorage.getItem("loggedInUser")) || currentUser;
+
+      if (authError) {
+        alert(authError);
+        return;
+      }
+
+      if (!updatedUser) {
+        alert("Login failed");
+        return;
+      }
+
+      setUser(updatedUser);
+
+      localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
+
+      alert("Login successful");
+
+      // Clear form
+      setEmail("");
+      setPassword("");
+
+      navigate("/dashboard");
+    }, 100);
   };
 
   return (
@@ -55,11 +74,11 @@ const LoginPage = () => {
       <div className="login_card">
         <div className="login_header">
           <h1>Bank Login</h1>
+
           <p>Secure access to your account</p>
         </div>
 
         <form className="login_form" onSubmit={handleLogin}>
-          {/* Email Input */}
           <div className="form_group">
             <label htmlFor="email">Email Address</label>
 
@@ -69,15 +88,14 @@ const LoginPage = () => {
               <input
                 type="email"
                 id="email"
-                value={email}
                 placeholder="Enter your email"
                 required
+                value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Password Input */}
           <div className="form_group">
             <label htmlFor="password">Password</label>
 
@@ -86,10 +104,10 @@ const LoginPage = () => {
 
               <input
                 type={showPassword ? "text" : "password"}
-                value={password}
                 id="password"
-                placeholder="Enter your password"
+                placeholder="Enter password"
                 required
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
 
@@ -103,10 +121,10 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Remember & Forgot */}
           <div className="remember_forgot">
             <label className="remember_me">
               <input type="checkbox" />
+
               <span>Remember me</span>
             </label>
 
@@ -115,17 +133,14 @@ const LoginPage = () => {
             </a>
           </div>
 
-          {/* Login Button */}
           <button type="submit" className="login_btn">
             Login
           </button>
         </form>
 
-        {/* Signup Link */}
         <div className="signup_link">
           <p>
-            Don't have an account?{" "}
-            <Link to="/signup">Sign up here</Link>
+            Don't have an account? <Link to="/signup">Sign up here</Link>
           </p>
         </div>
       </div>

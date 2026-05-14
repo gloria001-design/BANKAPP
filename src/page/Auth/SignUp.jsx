@@ -1,29 +1,45 @@
 import React, { useState } from "react";
+
 import { Link, useNavigate } from "react-router-dom";
+
 import "./Login.css";
+
 import {
   FaRegEye,
   FaRegEyeSlash,
   FaUser,
   FaEnvelope,
   FaLock,
-  FaIdCard,
 } from "react-icons/fa";
+
 import { z } from "zod";
+
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import { useDispatch, useSelector } from "react-redux";
-import { createuser } from "../../redux/usersSlice";
+
+import { signUp } from "../../redux/usersSlice";
 
 const SignUp = () => {
-  const [showPassword, setShowPassword] = useState(false);
+  const nav = useNavigate();
+
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+
+  const users = useSelector((state) => state.users.list);
+
+  const [showPassword, setShowPassword] = useState(false);
+
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Validation Schema
   const signUpSchema = z
     .object({
+      fullName: z.string().min(2, "Full name must be at least 2 characters"),
+
       email: z.string().email("Invalid email address"),
+
       password: z
         .string()
         .min(8, "Password must be at least 8 characters")
@@ -31,97 +47,121 @@ const SignUp = () => {
           /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/,
           "Password must contain uppercase, lowercase, number, and special character",
         ),
-      fullName: z.string().min(2, "Full name must be at least 2 characters"),
-      confirmPassword: z.string(),
+
+      confirmPassword: z.string().min(1, "Please confirm your password"),
     })
+
     .refine((data) => data.password === data.confirmPassword, {
       message: "Passwords do not match",
-      path: ["confirmPassword"], // This specifies where the error message should be shown
+      path: ["confirmPassword"],
     });
-  const user = useSelector((state) => state.users);
-
-  console.log("user", user);
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(signUpSchema), // Links Zod to the form
+    resolver: zodResolver(signUpSchema),
   });
 
+  // Submit Function
   const submitSignUp = handleSubmit((data) => {
-    const accountNumber = Math.floor(
-      1000000000 + Math.random() * 9000000000,
-    ).toString();
+    // Check if email already exists
+    const existingUser = users.find(
+      (user) => user.email.toLowerCase() === data.email.toLowerCase().trim(),
+    );
 
-    console.log("Form Data:", data);
+    if (existingUser) {
+      alert("Email already exists");
+      return;
+    }
 
-    dispatch(createuser({...data, accountNumber}));
-    setTimeout(()=>{
-      navigate("/")
-    },5000)
+    // Remove confirmPassword before saving
+   const { confirmPassword, ...userData } = data || {};
+
+    dispatch(
+      signUp({
+        ...userData,
+        email: data.email.trim(),
+      }),
+    );
+
+    alert("Account created successfully");
+
+    // Reset form
+    reset();
+
+    // Redirect to login page
+    nav("/");
   });
-  // console.log(userDetails);
+
   return (
     <div className="login_container">
       <div className="login_card signup_card">
         <div className="login_header">
           <h1>Create Your Account</h1>
+
           <p>Join our bank and manage your finances</p>
         </div>
 
         <form className="login_form" onSubmit={submitSignUp}>
-          {/* Full Name Input */}
+          {/* Full Name */}
           <div className="form_group">
             <label htmlFor="name">Full Name</label>
+
             <div className="input_wrapper">
               <FaUser className="input_icon" />
+
               <input
                 type="text"
                 id="name"
                 placeholder="Enter your full name"
-                {...register("fullName")} // Connects input to react-hook-form
+                {...register("fullName")}
               />
-              {errors.fullName && <span>{errors.fullName.message}</span>}
             </div>
+
+            {errors.fullName && (
+              <span style={{ color: "red" }}>
+                {String(errors.fullName.message)}
+              </span>
+            )}
           </div>
-          {/* Email Input */}
+
+          {/* Email */}
           <div className="form_group">
             <label htmlFor="email">Email Address</label>
+
             <div className="input_wrapper">
               <FaEnvelope className="input_icon" />
+
               <input
                 type="email"
                 id="email"
                 placeholder="Enter your email"
-                {...register("email")} // Connects input to react-hook-form
+                {...register("email")}
               />
-              {errors.email && <span>{errors.email.message}</span>}
             </div>
+
+            {errors.email && (
+              <span style={{ color: "red" }}>
+                {String(errors.email.message)}
+              </span>
+            )}
           </div>
-          {/* Account Number Input
-          <div className="form_group">
-            <label htmlFor="accountNumber">Account Number</label>
-            <div className="input_wrapper">
-              <FaIdCard className="input_icon" />
-              <input
-                type="text"
-                id="accountNumber"
-                placeholder="Enter account number"
-              />
-            </div>
-          </div> */}
-          {/* Password Input */}
+
+          {/* Password */}
           <div className="form_group">
             <label htmlFor="password">Password</label>
+
             <div className="input_wrapper password_wrapper">
               <FaLock className="input_icon" />
+
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
-                placeholder="Create a strong password"
-                {...register("password")} // Connects input to react-hook-form
+                placeholder="Create password"
+                {...register("password")}
               />
 
               <button
@@ -132,20 +172,26 @@ const SignUp = () => {
                 {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
               </button>
             </div>
+
             {errors.password && (
-              <span style={{ color: "red" }}>{errors.password.message}</span>
+              <span style={{ color: "red" }}>
+                {String(errors.password.message)}
+              </span>
             )}
           </div>
-          {/* Confirm Password Input */}
+
+          {/* Confirm Password */}
           <div className="form_group">
             <label htmlFor="confirmPassword">Confirm Password</label>
+
             <div className="input_wrapper password_wrapper">
               <FaLock className="input_icon" />
+
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 id="confirmPassword"
-                placeholder="Confirm your password"
-                {...register("confirmPassword")} // Connects input to react-hook-form
+                placeholder="Confirm password"
+                {...register("confirmPassword")}
               />
 
               <button
@@ -156,28 +202,18 @@ const SignUp = () => {
                 {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
               </button>
             </div>
+
             {errors.confirmPassword && (
-              <span>{errors.confirmPassword.message}</span>
+              <span style={{ color: "red" }}>
+                {String(errors.confirmPassword.message)}
+              </span>
             )}
           </div>
-          {/* Terms & Conditions */}
-          <div className="form_group">
-            <label className="terms_checkbox">
-              <input type="checkbox" />
-              <span>
-                I agree to the{" "}
-                <a href="#terms" className="terms_link">
-                  Terms and Conditions
-                </a>
-              </span>
-            </label>
-          </div>
-          {/* Signup Button */}
-          {/* <Link to="/"> */}{" "}
-          <button type="submit" className="login_btn" >
+
+          {/* Submit Button */}
+          <button type="submit" className="login_btn">
             Sign Up
           </button>
-          {/* </Link> */}
         </form>
 
         {/* Login Link */}

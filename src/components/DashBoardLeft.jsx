@@ -1,16 +1,16 @@
 import React, { useContext, useEffect, useState } from "react";
 import "../page/Dashboard/css/DashboardStyle.css";
-import "./css/ButtonStyle.css";
-
 import { AuthContext } from "../context/AuthContext.jsx";
 import { useSelector, useDispatch } from "react-redux";
 import { transferFunds } from "../redux/usersSlice";
+import "./css/ButtonStyle.css";
 
 const DashBoardLeft = () => {
   const { user, fromAccount, setFromAccount } = useContext(AuthContext);
 
-  // Safe fallback
-  const users = useSelector((state) => state.users || []);
+  const users = useSelector((state) => state.users.list);
+
+  const dispatch = useDispatch();
 
   const [recipientInfo, setRecipientInfo] = useState({
     id: 0,
@@ -20,25 +20,24 @@ const DashBoardLeft = () => {
 
   const [recipientAccountNumber, setRecipientAccountNumber] = useState("");
 
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState("");
+
   const [memo, setMemo] = useState("");
+
   const [accountID, setAccountID] = useState("");
 
-  const dispatch = useDispatch();
-
-  // FIND USER BY ACCOUNT NUMBER
   const findUserbyAccountNumber = (accountNumber) => {
     const foundUser = users.find((user) =>
-      user.accounts?.some((account) => account.accountNumber === accountNumber),
+      user.accounts.some((account) => account.accountNumber === accountNumber),
     );
 
-    // If no user found
     if (!foundUser) {
       setRecipientInfo({
         id: 0,
         fullName: "",
         account: "",
       });
+
       return;
     }
 
@@ -49,29 +48,60 @@ const DashBoardLeft = () => {
     setRecipientInfo({
       id: foundUser.id,
       fullName: foundUser.fullName,
-      account: accountInfo?.name || "",
+      account: accountInfo.name,
     });
   };
 
-  // SEND FUNDS
   const handleSendFunds = (e) => {
     e.preventDefault();
 
+    if (!fromAccount) {
+      alert("Please select an account");
+      return;
+    }
+
+    if (!recipientInfo.id) {
+      alert("Recipient not found");
+      return;
+    }
+
+    if (Number(amount) <= 0) {
+      alert("Enter a valid amount");
+      return;
+    }
+
+    // Prevent sending to yourself
+    if (fromAccount.accountNumber === recipientAccountNumber) {
+      alert("You cannot transfer to your own account");
+      return;
+    }
+
     dispatch(
       transferFunds({
-        userID: user?.id,
-        senderAccountID: fromAccount?.id,
+        userID: user.id,
+        senderAccountID: fromAccount.id,
         recipientAccountNumber,
-        reciepientID: recipientInfo?.id,
+        recipientID: recipientInfo.id,
         amount: Number(amount),
         memo,
       }),
     );
+
+    // Clear form after transfer
+    setRecipientAccountNumber("");
+    setRecipientInfo({
+      id: 0,
+      fullName: "",
+      account: "",
+    });
+    setAmount("");
+    setMemo("");
   };
 
-  // GET ACCOUNT INFO
   const getAccountInfo = () => {
-    const account = user?.accounts?.find((account) => account.id == accountID);
+    const account = user?.accounts?.find(
+      (account) => account.id === Number(accountID),
+    );
 
     setFromAccount(account);
   };
@@ -80,7 +110,6 @@ const DashBoardLeft = () => {
     getAccountInfo();
   }, [accountID, user]);
 
-  // FIND RECIPIENT WHEN ACCOUNT NUMBER IS COMPLETE
   useEffect(() => {
     if (recipientAccountNumber.length === 10) {
       findUserbyAccountNumber(recipientAccountNumber);
@@ -100,22 +129,20 @@ const DashBoardLeft = () => {
       </header>
 
       <form onSubmit={handleSendFunds}>
-        {/* FROM ACCOUNT */}
         <div className="SelectOption_ClassName_Container">
           <label>From Account</label>
 
           <select onChange={(e) => setAccountID(e.target.value)}>
             <option value="">Select Account</option>
 
-            {user?.accounts?.map((item, index) => (
-              <option value={item.id} key={index}>
+            {user?.accounts?.map((item) => (
+              <option value={item.id} key={item.id}>
                 {item.name}
               </option>
             ))}
           </select>
         </div>
 
-        {/* RECIPIENT ACCOUNT */}
         <div className="Inputs_className_Container">
           <label>Recipient Account Number</label>
 
@@ -124,34 +151,32 @@ const DashBoardLeft = () => {
             placeholder="Enter Account Number"
             value={recipientAccountNumber}
             onChange={(e) => setRecipientAccountNumber(e.target.value)}
+            maxLength={10}
           />
         </div>
 
-        {/* FULL NAME */}
         <div className="Inputs_className_Container">
           <label>Full Name</label>
 
           <input
             type="text"
             placeholder="Full Name"
-            value={recipientInfo?.fullName}
+            value={recipientInfo.fullName}
             readOnly
           />
         </div>
 
-        {/* BANK NAME */}
         <div className="Inputs_className_Container">
-          <label>Bank Name</label>
+          <label>Account Name</label>
 
           <input
             type="text"
-            placeholder="Bank Name"
-            value={recipientInfo?.account}
+            placeholder="Account Name"
+            value={recipientInfo.account}
             readOnly
           />
         </div>
 
-        {/* AMOUNT */}
         <div className="Inputs_className_Container">
           <label>Amount</label>
 
@@ -163,7 +188,6 @@ const DashBoardLeft = () => {
           />
         </div>
 
-        {/* MEMO */}
         <div className="TextArea_ClassName_Container">
           <label>Memo</label>
 
