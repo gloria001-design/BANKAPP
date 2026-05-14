@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   list: [],
   currentUser: null,
-  authError: null,
+  error: null,
 };
 
 const usersSlice = createSlice({
@@ -12,24 +12,23 @@ const usersSlice = createSlice({
   initialState,
 
   reducers: {
-    clearAuthError: (state) => {
-      state.authError = null;
+    clearError: (state) => {
+      state.error = null;
     },
 
     login: (state, action) => {
       const { email, password } = action.payload;
-
-      state.authError = null;
+      state.error = null;
 
       const user = state.list.find((u) => u.email === email);
 
       if (!user) {
-        state.authError = "User not found";
+        state.error = "User not found";
         return;
       }
 
       if (user.password !== password) {
-        state.authError = "Incorrect password";
+        state.error = "Incorrect password";
         return;
       }
 
@@ -38,26 +37,11 @@ const usersSlice = createSlice({
 
     logout: (state) => {
       state.currentUser = null;
-      state.authError = null;
+      state.error = null;
     },
 
     signUp: (state, action) => {
-      const { fullName, email, password } = action.payload;
-
-      // Generate unique 10-digit account number
-      let accountNumber;
-
-      do {
-        accountNumber = Math.floor(
-          1000000000 + Math.random() * 9000000000,
-        ).toString();
-      } while (
-        state.list.some((user) =>
-          user.accounts.some(
-            (account) => account.accountNumber === accountNumber,
-          ),
-        )
-      );
+      const { fullName, email, password, accountNumber } = action.payload;
 
       const newUser = {
         id: Date.now(),
@@ -155,7 +139,7 @@ const usersSlice = createSlice({
   },
 });
 
-export const { clearAuthError, login, logout, signUp, transferFunds } =
+export const { clearError, login, logout, signUp, transferFunds } =
   usersSlice.actions;
 
 export default usersSlice.reducer;

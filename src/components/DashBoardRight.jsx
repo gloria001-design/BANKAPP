@@ -1,33 +1,23 @@
-import React, { useContext, useEffect, useState } from "react";
+import React from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
 import { useSelector } from "react-redux";
 
 const DashBoardRight = () => {
   const { fromAccount, user } = useContext(AuthContext);
-
   const users = useSelector((state) => state.users.list);
-
-  const [theAccountInfo, setTheAccountInfo] = useState(null);
-  const [theTransactions, setTheTransactions] = useState([]);
+  const [accountInfo, setAccountInfo] = useState(null);
+  const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
-    if (!user) return;
-
-    // Find logged in user
-    const currentUser = users.find((u) => u.id === user.id);
-
-    if (!currentUser) return;
-
-    // Find selected account
-    const selectedAccount = currentUser.accounts.find(
+    const accountInfo = users.find((e) => e.id === user?.id) || null;
+    const transactions = accountInfo?.transactions || [];
+    const account = accountInfo?.accounts?.find(
       (account) => account.id === fromAccount?.id,
     );
-
-    // Set account info
-    setTheAccountInfo(selectedAccount || null);
-
-    // Set transactions
-    setTheTransactions(currentUser.transactions || []);
+    console.log("dashboard right", user);
+    setAccountInfo(account);
+    setTransactions(transactions);
   }, [fromAccount, users, user]);
 
   return (
@@ -35,33 +25,25 @@ const DashBoardRight = () => {
       <div className="Bank_Form_Wrapper_Right_Top">
         <article className="Bank_Content_Wrapper_Right_Top">
           <p>Total Available Balance</p>
-
-          <h2>&#8358; {theAccountInfo?.balance?.toLocaleString() || "0"}</h2>
-
-          <span>Across {user?.accounts?.length || 0} Accounts</span>
+          <h2 contentEditable="true">&#8358; {accountInfo?.balance}</h2>
+          <span>Across 2 Accounts</span>
         </article>
       </div>
-
       <div className="Bank_Form_Wrapper_Right_Bottom">
         <p>Transactions History</p>
 
-        {theTransactions.length > 0 ? (
-          theTransactions.map((transaction) => (
-            <div
-              className="Bank_Content_Wrapper_Right_Bottom_Transaction"
-              key={transaction.id}
-            >
-              <span>{transaction.type === "debit" ? "Debit:" : "Credit:"}</span>
-
-              <span>
-                {transaction.type === "debit" ? "-" : "+"}
-                &#8358; {transaction.amount.toLocaleString()}
-              </span>
-            </div>
-          ))
-        ) : (
-          <p>No transactions yet</p>
-        )}
+        {transactions?.map((transaction, index) => (
+          <div
+            className="Bank_Content_Wrapper_Right_Bottom_Transaction"
+            key={index}
+          >
+            <span>{transaction.type === "debit" ? "Debit:" : "Credit:"}</span>
+            <span>
+              {transaction.type === "debit" ? "-" : "+"} &#8358;{" "}
+              {transaction.amount}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

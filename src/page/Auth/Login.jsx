@@ -8,9 +8,11 @@ import { FaRegEye, FaRegEyeSlash, FaUser, FaLock } from "react-icons/fa";
 
 import { AuthContext } from "../../context/AuthContext.jsx";
 
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
-import { clearAuthError, login } from "../../redux/usersSlice";
+import { clearError, login } from "../../redux/usersSlice";
+
+import store from "../../redux/store";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,52 +23,30 @@ const LoginPage = () => {
 
   const dispatch = useDispatch();
 
-  const navigate = useNavigate();
-
   const { setUser } = useContext(AuthContext);
 
-  // Get Redux state
-  const { currentUser, authError } = useSelector((state) => state.users);
+  const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
 
-    dispatch(clearAuthError());
+    dispatch(clearError());
+    dispatch(login({ email, password }));
 
-    dispatch(
-      login({
-        email,
-        password,
-      }),
-    );
+    const { currentUser, error } = store.getState().users;
 
-    // Small timeout to allow Redux state update
-    setTimeout(() => {
-      const updatedUser =
-        JSON.parse(localStorage.getItem("loggedInUser")) || currentUser;
+    if (error) {
+      alert(error);
+      return;
+    }
 
-      if (authError) {
-        alert(authError);
-        return;
-      }
+    setUser(currentUser);
 
-      if (!updatedUser) {
-        alert("Login failed");
-        return;
-      }
+    localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
 
-      setUser(updatedUser);
+    alert("Login successful");
 
-      localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
-
-      alert("Login successful");
-
-      // Clear form
-      setEmail("");
-      setPassword("");
-
-      navigate("/dashboard");
-    }, 100);
+    navigate("/dashboard");
   };
 
   return (
@@ -89,7 +69,7 @@ const LoginPage = () => {
                 type="email"
                 id="email"
                 placeholder="Enter your email"
-                required
+                required={true}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -106,7 +86,7 @@ const LoginPage = () => {
                 type={showPassword ? "text" : "password"}
                 id="password"
                 placeholder="Enter password"
-                required
+                required={true}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

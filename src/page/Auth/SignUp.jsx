@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-
 import { Link, useNavigate } from "react-router-dom";
-
 import "./Login.css";
 
 import {
@@ -24,20 +22,18 @@ import { signUp } from "../../redux/usersSlice";
 
 const SignUp = () => {
   const nav = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const dispatch = useDispatch();
 
   const users = useSelector((state) => state.users.list);
 
-  const [showPassword, setShowPassword] = useState(false);
+  console.log(users);
 
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Validation Schema
   const signUpSchema = z
     .object({
-      fullName: z.string().min(2, "Full name must be at least 2 characters"),
-
       email: z.string().email("Invalid email address"),
 
       password: z
@@ -48,7 +44,9 @@ const SignUp = () => {
           "Password must contain uppercase, lowercase, number, and special character",
         ),
 
-      confirmPassword: z.string().min(1, "Please confirm your password"),
+      fullName: z.string().min(2, "Full name must be at least 2 characters"),
+
+      confirmPassword: z.string(),
     })
 
     .refine((data) => data.password === data.confirmPassword, {
@@ -59,41 +57,34 @@ const SignUp = () => {
   const {
     register,
     handleSubmit,
-    reset,
+
     formState: { errors },
   } = useForm({
     resolver: zodResolver(signUpSchema),
   });
 
-  // Submit Function
   const submitSignUp = handleSubmit((data) => {
-    // Check if email already exists
-    const existingUser = users.find(
-      (user) => user.email.toLowerCase() === data.email.toLowerCase().trim(),
-    );
+    const accountNumber = Math.floor(
+      1000000000 + Math.random() * 9000000000,
+    ).toString();
+
+    const existingUser = users.find((user) => user.email === data.email);
 
     if (existingUser) {
       alert("Email already exists");
       return;
     }
 
-    // Remove confirmPassword before saving
-   const { confirmPassword, ...userData } = data || {};
-
     dispatch(
       signUp({
-        ...userData,
-        email: data.email.trim(),
+        ...data,
+        accountNumber,
       }),
     );
 
     alert("Account created successfully");
-
-    // Reset form
-    reset();
-
-    // Redirect to login page
     nav("/");
+    console.log(data);
   });
 
   return (
@@ -106,7 +97,6 @@ const SignUp = () => {
         </div>
 
         <form className="login_form" onSubmit={submitSignUp}>
-          {/* Full Name */}
           <div className="form_group">
             <label htmlFor="name">Full Name</label>
 
@@ -122,13 +112,10 @@ const SignUp = () => {
             </div>
 
             {errors.fullName && (
-              <span style={{ color: "red" }}>
-                {String(errors.fullName.message)}
-              </span>
+              <span style={{ color: "red" }}>{errors.fullName.message}</span>
             )}
           </div>
 
-          {/* Email */}
           <div className="form_group">
             <label htmlFor="email">Email Address</label>
 
@@ -144,13 +131,10 @@ const SignUp = () => {
             </div>
 
             {errors.email && (
-              <span style={{ color: "red" }}>
-                {String(errors.email.message)}
-              </span>
+              <span style={{ color: "red" }}>{errors.email.message}</span>
             )}
           </div>
 
-          {/* Password */}
           <div className="form_group">
             <label htmlFor="password">Password</label>
 
@@ -174,13 +158,10 @@ const SignUp = () => {
             </div>
 
             {errors.password && (
-              <span style={{ color: "red" }}>
-                {String(errors.password.message)}
-              </span>
+              <span style={{ color: "red" }}>{errors.password.message}</span>
             )}
           </div>
 
-          {/* Confirm Password */}
           <div className="form_group">
             <label htmlFor="confirmPassword">Confirm Password</label>
 
@@ -205,18 +186,16 @@ const SignUp = () => {
 
             {errors.confirmPassword && (
               <span style={{ color: "red" }}>
-                {String(errors.confirmPassword.message)}
+                {errors.confirmPassword.message}
               </span>
             )}
           </div>
 
-          {/* Submit Button */}
           <button type="submit" className="login_btn">
             Sign Up
           </button>
         </form>
 
-        {/* Login Link */}
         <div className="signup_link">
           <p>
             Already have an account? <Link to="/">Login here</Link>

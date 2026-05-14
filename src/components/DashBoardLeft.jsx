@@ -1,108 +1,68 @@
-import React, { useContext, useEffect, useState } from "react";
+import React from "react";
+import SelectOption from "./SelectOption";
+import Inputs from "./Inputs";
+import TextArea from "./TextArea";
 import "../page/Dashboard/css/DashboardStyle.css";
+import Button from "./Button";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { transferFunds } from "../redux/usersSlice";
 import "./css/ButtonStyle.css";
 
 const DashBoardLeft = () => {
   const { user, fromAccount, setFromAccount } = useContext(AuthContext);
-
   const users = useSelector((state) => state.users.list);
-
-  const dispatch = useDispatch();
-
   const [recipientInfo, setRecipientInfo] = useState({
     id: 0,
     fullName: "",
     account: "",
   });
-
   const [recipientAccountNumber, setRecipientAccountNumber] = useState("");
-
-  const [amount, setAmount] = useState("");
-
+  const [amount, setAmount] = useState(0);
   const [memo, setMemo] = useState("");
-
   const [accountID, setAccountID] = useState("");
+  const dispatch = useDispatch();
 
   const findUserbyAccountNumber = (accountNumber) => {
-    const foundUser = users.find((user) =>
+    // console.log(accountNumber);
+    const user = users.find((user) =>
       user.accounts.some((account) => account.accountNumber === accountNumber),
     );
-
-    if (!foundUser) {
-      setRecipientInfo({
-        id: 0,
-        fullName: "",
-        account: "",
-      });
-
-      return;
-    }
-
-    const accountInfo = foundUser.accounts.find(
+    console.log(user);
+    const accountInfo = user.accounts.find(
       (account) => account.accountNumber === accountNumber,
     );
-
+    console.log({
+      id: user.id,
+      fullName: user.fullName,
+      account: accountInfo.name,
+    });
     setRecipientInfo({
-      id: foundUser.id,
-      fullName: foundUser.fullName,
+      id: user.id,
+      fullName: user.fullName,
       account: accountInfo.name,
     });
   };
 
   const handleSendFunds = (e) => {
     e.preventDefault();
-
-    if (!fromAccount) {
-      alert("Please select an account");
-      return;
-    }
-
-    if (!recipientInfo.id) {
-      alert("Recipient not found");
-      return;
-    }
-
-    if (Number(amount) <= 0) {
-      alert("Enter a valid amount");
-      return;
-    }
-
-    // Prevent sending to yourself
-    if (fromAccount.accountNumber === recipientAccountNumber) {
-      alert("You cannot transfer to your own account");
-      return;
-    }
-
     dispatch(
       transferFunds({
         userID: user.id,
         senderAccountID: fromAccount.id,
-        recipientAccountNumber,
-        recipientID: recipientInfo.id,
+        recipientAccountNumber: recipientAccountNumber,
+        reciepientID: recipientInfo.id,
         amount: Number(amount),
-        memo,
+        memo: memo,
       }),
     );
-
-    // Clear form after transfer
-    setRecipientAccountNumber("");
-    setRecipientInfo({
-      id: 0,
-      fullName: "",
-      account: "",
-    });
-    setAmount("");
-    setMemo("");
   };
 
   const getAccountInfo = () => {
-    const account = user?.accounts?.find(
-      (account) => account.id === Number(accountID),
-    );
-
+    const account = user?.accounts?.find((account) => account.id == accountID);
+    console.log("dashboard left", account);
     setFromAccount(account);
   };
 
@@ -111,9 +71,10 @@ const DashBoardLeft = () => {
   }, [accountID, user]);
 
   useEffect(() => {
+    console.log(recipientAccountNumber.length);
     if (recipientAccountNumber.length === 10) {
       findUserbyAccountNumber(recipientAccountNumber);
-    } else {
+    } else if (recipientAccountNumber.length < 10) {
       setRecipientInfo({
         id: 0,
         fullName: "",
@@ -122,77 +83,65 @@ const DashBoardLeft = () => {
     }
   }, [recipientAccountNumber]);
 
+  // const accounts = .map(account => account);
   return (
     <div className="Bank_Form_Wrapper_Left">
       <header>
         <h4>Send Funds</h4>
       </header>
-
       <form onSubmit={handleSendFunds}>
-        <div className="SelectOption_ClassName_Container">
+        <div className={"SelectOption_ClassName_Container"}>
           <label>From Account</label>
-
           <select onChange={(e) => setAccountID(e.target.value)}>
             <option value="">Select Account</option>
-
-            {user?.accounts?.map((item) => (
-              <option value={item.id} key={item.id}>
+            {user.accounts.map((item, index) => (
+              <option value={item.id} key={index}>
                 {item.name}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="Inputs_className_Container">
+        <div className={"Inputs_className_Container"}>
           <label>Recipient Account Number</label>
-
           <input
-            type="text"
-            placeholder="Enter Account Number"
+            type={"text"}
+            placeholder={"Enter Account Number"}
             value={recipientAccountNumber}
             onChange={(e) => setRecipientAccountNumber(e.target.value)}
-            maxLength={10}
           />
         </div>
-
         <div className="Inputs_className_Container">
           <label>Full Name</label>
-
           <input
-            type="text"
-            placeholder="Full Name"
-            value={recipientInfo.fullName}
-            readOnly
+            type={"text"}
+            placeholder={"Full Name"}
+            value={recipientInfo?.fullName}
           />
         </div>
 
         <div className="Inputs_className_Container">
-          <label>Account Name</label>
-
+          <label>Bank Name</label>
           <input
-            type="text"
-            placeholder="Account Name"
-            value={recipientInfo.account}
-            readOnly
+            type={"text"}
+            placeholder={"Bank Name"}
+            value={recipientInfo?.account}
           />
         </div>
 
         <div className="Inputs_className_Container">
           <label>Amount</label>
-
           <input
-            type="number"
-            placeholder="Amount"
+            type={"text"}
+            placeholder={"Amount"}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
         </div>
-
         <div className="TextArea_ClassName_Container">
           <label>Memo</label>
-
           <textarea
-            placeholder="Rent, dinner, etc."
+            placeholder={"Rent, dinner, etc."}
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
           />
